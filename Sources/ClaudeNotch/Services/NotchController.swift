@@ -115,7 +115,7 @@ final class NotchController {
             // 鼠标离开 → 延迟收起（防抖，给用户回来的机会）
             if collapseTask == nil {
                 collapseTask = Task {
-                    try? await Task.sleep(for: .milliseconds(400))
+                    try? await Task.sleep(for: .milliseconds(150))
                     guard !Task.isCancelled else { return }
                     // 再次确认鼠标确实不在区域内
                     let currentMouse = NSEvent.mouseLocation
@@ -164,8 +164,6 @@ final class NotchController {
         guard !isAnimating, let notch = dynamicNotch else { return }
         isAnimating = true
         await notch.expand()
-        // expand 内部动画约 0.4-0.65s，额外等一点确保稳定
-        try? await Task.sleep(for: .milliseconds(100))
         isAnimating = false
     }
 
@@ -173,7 +171,6 @@ final class NotchController {
         guard !isAnimating, let notch = dynamicNotch else { return }
         isAnimating = true
         await notch.compact()
-        try? await Task.sleep(for: .milliseconds(100))
         isAnimating = false
     }
 

@@ -33,7 +33,7 @@ get_terminal_tab() {
   fi
 }
 
-# 获取 iTerm 当前 Tab 标题（通过 AppleScript，有缓存机制）
+# 获取 iTerm Tab 标题（通过 ITERM_SESSION_ID 精确定位 session）
 get_terminal_title() {
   local session_id="$1"
   local cache_file="$MONITOR_DIR/.title_cache_${session_id}"
@@ -47,17 +47,31 @@ get_terminal_title() {
     fi
   fi
 
-  # 尝试通过 AppleScript 获取标题
   local title=""
-  if [ -n "${ITERM_SESSION_ID:-}" ]; then
-    title=$(osascript -e '
-      tell application "iTerm2"
-        try
-          set currentTab to current tab of current window
-          return name of currentTab
-        end try
+  local iterm_id="${ITERM_SESSION_ID:-}"
+  if [ -n "$iterm_id" ]; then
+    # 提取 UUID 部分（格式: w0t0p0:UUID）
+    local uuid="${iterm_id#*:}"
+    title=$(osascript -e "
+      tell application \"iTerm2\"
+        repeat with aWindow in windows
+          repeat with aTab in tabs of aWindow
+            repeat with aSession in sessions of aTab
+              if unique ID of aSession is \"$uuid\" then
+                tell aSession
+                  try
+                    set titleOverride to variable named \"tab.titleOverride\"
+                    if titleOverride is not \"\" and titleOverride is not \"missing value\" then
+                      return titleOverride
+                    end if
+                  end try
+                end tell
+              end if
+            end repeat
+          end repeat
+        end repeat
       end tell
-    ' 2>/dev/null)
+    " 2>/dev/null)
   fi
 
   # 缓存结果
@@ -85,16 +99,15 @@ write_status() {
   local terminal_tab
   terminal_tab=$(get_terminal_tab)
 
-  # 只在 SessionStart 时获取终端标题（避免频繁调用 osascript）
+  # 获取终端标题：先读缓存/已有文件，为空则重新获取
   local terminal_title=""
-  if [ "$hook_event" = "SessionStart" ]; then
+  local existing="$MONITOR_DIR/${session_id}.json"
+  if [ -f "$existing" ]; then
+    terminal_title=$(json_get "$(cat "$existing")" "terminal_title")
+  fi
+  # 如果还是空的，尝试通过 AppleScript 获取
+  if [ -z "$terminal_title" ]; then
     terminal_title=$(get_terminal_title "$session_id")
-  else
-    # 读已有文件中的 terminal_title
-    local existing="$MONITOR_DIR/${session_id}.json"
-    if [ -f "$existing" ]; then
-      terminal_title=$(json_get "$(cat "$existing")" "terminal_title")
-    fi
   fi
 
   local timestamp

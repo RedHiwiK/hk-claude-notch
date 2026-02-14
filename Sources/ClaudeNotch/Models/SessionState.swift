@@ -88,16 +88,19 @@ struct SessionState: Codable, Identifiable, Sendable {
 
     var id: String { sessionId }
 
-    /// 用于显示的标识名：优先终端标题 → 项目名 + Tab → 项目名 → session 短码
+    /// 用于显示的标识名：项目名-自定义名 · Tab → 项目名 · Tab → 项目名
     var displayLabel: String {
-        if let title = terminalTitle, !title.isEmpty {
-            return title
-        }
         let name = projectName ?? "Unknown"
-        if let tab = terminalTab, !tab.isEmpty {
-            return "\(name) · \(tab)"
+        let hasTitle = terminalTitle != nil && !terminalTitle!.isEmpty
+        let hasTab = terminalTab != nil && !terminalTab!.isEmpty
+
+        // 组合项目名和自定义标题
+        let prefix = hasTitle ? "\(name)-\(terminalTitle!)" : name
+
+        if hasTab {
+            return "\(prefix) · \(terminalTab!)"
         }
-        return name
+        return prefix
     }
 
     enum CodingKeys: String, CodingKey {

@@ -43,8 +43,10 @@ struct SessionRowView: View {
                         if let summary = session.toolInputSummary, !summary.isEmpty {
                             Text(summary)
                                 .font(.system(size: 10))
-                                .foregroundStyle(.white.opacity(0.5))
-                                .lineLimit(1)
+                                .foregroundStyle(.white.opacity(
+                                    session.status == .pendingApproval ? 0.9 : 0.5
+                                ))
+                                .lineLimit(session.status == .pendingApproval ? 3 : 1)
                         }
                     }
                 }
@@ -61,27 +63,26 @@ struct SessionRowView: View {
                 }
 
                 if session.status == .pendingApproval {
-                    // 审批按钮
-                    Button {
-                        if let itermId = session.itermSessionId, !itermId.isEmpty {
-                            ApprovalService.approve(itermSessionId: itermId)
-                        }
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 10))
-                            Text("Approve")
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(
-                            Capsule()
-                                .fill(Color.yellow)
-                        )
+                    // 跳转 iTerm 对应 session
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.up.forward.app")
+                            .font(.system(size: 10))
+                        Text("Go to")
+                            .font(.system(size: 10, weight: .semibold))
                     }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(Color.yellow)
+                    )
+                    .contentShape(Capsule())
+                    .onTapGesture {
+                        if let itermId = session.itermSessionId, !itermId.isEmpty {
+                            ApprovalService.activateITermSession(itermSessionId: itermId)
+                        }
+                    }
                 } else {
                     // 状态标签
                     Text(session.status.displayName)
@@ -125,6 +126,17 @@ struct SessionRowView: View {
         )
         .onAppear {
             isAnimating = session.status == .toolRunning
+            // pendingApproval 时自动展开详情，方便查看权限请求内容
+            if session.status == .pendingApproval && hasExpandableContent {
+                isExpanded = true
+            }
+        }
+        .onChange(of: session.status) { _, newStatus in
+            if newStatus == .pendingApproval && hasExpandableContent {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isExpanded = true
+                }
+            }
         }
     }
 
@@ -148,9 +160,9 @@ struct SessionRowView: View {
 
             if let summary = session.toolInputSummary, !summary.isEmpty {
                 Text(summary)
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .lineLimit(8)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(12)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -165,44 +177,24 @@ struct SessionRowView: View {
             }
 
             // 操作按钮（仅 pendingApproval 状态）
-            if session.status == .pendingApproval {
+            if session.status == .pendingApproval,
+               let itermId = session.itermSessionId, !itermId.isEmpty {
                 HStack(spacing: 8) {
                     Spacer()
 
-                    Button {
-                        if let itermId = session.itermSessionId, !itermId.isEmpty {
-                            ApprovalService.approve(itermSessionId: itermId)
-                        }
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 9, weight: .bold))
-                            Text("Approve")
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.yellow))
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.up.forward.app")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Go to iTerm")
+                            .font(.system(size: 10, weight: .semibold))
                     }
-                    .buttonStyle(.plain)
-
-                    if let itermId = session.itermSessionId, !itermId.isEmpty {
-                        Button {
-                            ApprovalService.activateITermSession(itermSessionId: itermId)
-                        } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "arrow.up.forward.app")
-                                    .font(.system(size: 9, weight: .bold))
-                                Text("iTerm")
-                                    .font(.system(size: 10, weight: .semibold))
-                            }
-                            .foregroundStyle(.white.opacity(0.8))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.white.opacity(0.15)))
-                        }
-                        .buttonStyle(.plain)
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.yellow))
+                    .contentShape(Capsule())
+                    .onTapGesture {
+                        ApprovalService.activateITermSession(itermSessionId: itermId)
                     }
                 }
             }
