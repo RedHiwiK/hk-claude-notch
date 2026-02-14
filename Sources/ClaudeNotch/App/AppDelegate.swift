@@ -8,6 +8,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var notchController: NotchController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // 安装/更新 hooks（幂等）
+        HookInstaller.installIfNeeded()
+
         // 隐藏 Dock 图标
         NSApp.setActivationPolicy(.accessory)
 

@@ -25,6 +25,11 @@ rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources/hooks"
 
+# 复制图标
+if [ -f "$PROJECT_DIR/Resources/AppIcon.icns" ]; then
+  cp "$PROJECT_DIR/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+fi
+
 # 复制可执行文件
 cp "$BUILD_DIR/ClaudeNotch" "$APP_BUNDLE/Contents/MacOS/ClaudeNotch"
 
@@ -64,6 +69,8 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
     <string>6.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSHighResolutionCapable</key>
