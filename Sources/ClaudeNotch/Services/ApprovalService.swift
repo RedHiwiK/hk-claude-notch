@@ -36,4 +36,37 @@ enum ApprovalService {
         process.standardError = FileHandle.nullDevice
         try? process.run()
     }
+
+    /// 激活 iTerm 并跳转到指定 session 所在的 tab
+    static func activateITermSession(itermSessionId: String) {
+        let sessionUUID: String
+        if let colonIndex = itermSessionId.firstIndex(of: ":") {
+            sessionUUID = String(itermSessionId[itermSessionId.index(after: colonIndex)...])
+        } else {
+            sessionUUID = itermSessionId
+        }
+
+        let script = """
+        tell application "iTerm2"
+            activate
+            repeat with aWindow in windows
+                repeat with aTab in tabs of aWindow
+                    repeat with aSession in sessions of aTab
+                        if unique ID of aSession is "\(sessionUUID)" then
+                            select aTab
+                            return
+                        end if
+                    end repeat
+                end repeat
+            end repeat
+        end tell
+        """
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try? process.run()
+    }
 }

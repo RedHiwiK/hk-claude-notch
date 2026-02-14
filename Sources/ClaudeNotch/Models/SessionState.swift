@@ -56,6 +56,20 @@ enum SessionStatus: String, Codable, CaseIterable, Sendable {
         default: false
         }
     }
+
+    /// 排序权重：数值越大越靠前显示
+    var sortPriority: Int {
+        switch self {
+        case .pendingApproval: 100
+        case .toolRunning: 90
+        case .thinking: 80
+        case .started: 70
+        case .toolCompleted: 40
+        case .error: 30
+        case .completed: 20
+        case .ended: 10
+        }
+    }
 }
 
 struct SessionState: Codable, Identifiable, Sendable {

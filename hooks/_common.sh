@@ -104,8 +104,8 @@ write_status() {
   local target_file="$MONITOR_DIR/${session_id}.json"
 
   # 转义 JSON 字符串中的特殊字符
-  tool_input_summary=$(printf '%s' "$tool_input_summary" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | head -c 80)
-  message=$(printf '%s' "$message" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | head -c 80)
+  tool_input_summary=$(printf '%s' "$tool_input_summary" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | head -c 500)
+  message=$(printf '%s' "$message" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | head -c 500)
   terminal_title=$(printf '%s' "$terminal_title" | sed 's/\\/\\\\/g; s/"/\\"/g' | tr '\n' ' ' | head -c 60)
 
   local iterm_session_id="${ITERM_SESSION_ID:-}"

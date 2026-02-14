@@ -84,6 +84,12 @@ final class FileWatcherService: @unchecked Sendable {
                 guard let data = try? Data(contentsOf: url) else { return nil }
                 return try? JSONDecoder().decode(SessionState.self, from: data)
             }
-            .sorted { $0.timestamp > $1.timestamp }
+            .sorted {
+                // 先按状态优先级降序，再按时间戳降序
+                if $0.status.sortPriority != $1.status.sortPriority {
+                    return $0.status.sortPriority > $1.status.sortPriority
+                }
+                return $0.timestamp > $1.timestamp
+            }
     }
 }

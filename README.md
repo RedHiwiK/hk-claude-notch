@@ -6,7 +6,8 @@
 
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org/)
 [![macOS 14+](https://img.shields.io/badge/macOS-14+-blue.svg)](https://developer.apple.com/macos/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
+[![Release](https://img.shields.io/github/v/release/RedHiwiK/hk-claude-notch)](https://github.com/RedHiwiK/hk-claude-notch/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [English](#english) · [中文](#中文)
 
@@ -24,9 +25,12 @@ A native macOS menu bar app that displays real-time Claude Code CLI session stat
 |---------|-------------|
 | **Notch Status Display** | Compact mode shows active/total session count + pulsing status indicator |
 | **Expandable Session List** | Hover to expand and see all sessions with project name, tool name, and status |
+| **Click to Expand Details** | Click any session row to reveal full command text / file paths |
+| **One-Click Approval** | Approve permission prompts directly from the notch — no need to switch windows |
+| **Jump to iTerm** | Open the corresponding iTerm tab for multi-option approval scenarios |
+| **Smart Sorting** | Sessions sorted by priority: pending approval > running > thinking > idle > ended |
 | **5+ Session Support** | Collapsible list with "show more" for heavy multitaskers |
 | **Cute Mascot** | Animated face that bounces when active, blinks randomly, and changes expression by status |
-| **Auto Detection** | Claude Code Hooks push status changes — no polling, no lag |
 | **Zero Config** | One install script sets up everything |
 
 ### How It Works
@@ -43,28 +47,38 @@ ClaudeNotch App → Notch UI
 
 **Session statuses:** Started → Thinking → Tool Running → Tool Completed → Idle → Ended
 
+### Install (DMG)
+
+1. Download the latest `ClaudeNotch.dmg` from [Releases](https://github.com/RedHiwiK/hk-claude-notch/releases)
+2. Open the DMG and drag **ClaudeNotch.app** to `/Applications`
+3. Install hooks:
+```bash
+/Applications/ClaudeNotch.app/Contents/Resources/install-hooks.sh
+```
+4. Open ClaudeNotch from Applications
+5. Restart your Claude Code sessions to activate hooks
+
+### Build from Source
+
+Requires Swift 6.0+ toolchain.
+
+```bash
+git clone https://github.com/RedHiwiK/hk-claude-notch.git
+cd hk-claude-notch
+
+# Build & install hooks
+swift build
+./hooks/install.sh
+
+# Run
+swift run ClaudeNotch
+```
+
 ### Prerequisites
 
 - macOS 14+ (Sonoma or later)
-- Swift 6.0+ toolchain
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed
 - `jq` recommended (`brew install jq`), falls back to Python 3
-
-### Quick Start
-
-```bash
-# 1. Build
-cd claude-notch
-swift build
-
-# 2. Install hooks into Claude Code
-./hooks/install.sh
-
-# 3. Run
-swift run ClaudeNotch
-
-# 4. Restart your Claude Code sessions to activate hooks
-```
 
 ### Menu Bar Controls
 
@@ -82,6 +96,7 @@ swift run ClaudeNotch
 | 🟣 Purple | Claude is thinking |
 | 🟠 Orange | Tool is running |
 | 🟢 Green | Tool completed |
+| 🟡 Yellow | Pending approval |
 | ⚪ Gray | Idle (waiting for input) |
 | 🔴 Red | Error |
 
@@ -94,8 +109,9 @@ claude-notch/
 │   ├── App/                         # App entry + AppDelegate
 │   ├── Models/                      # SessionState, SessionManager
 │   ├── Views/                       # NotchContent, SessionList, Mascot, etc.
-│   └── Services/                    # FileWatcher, NotchController
-└── hooks/                           # Claude Code hook scripts + installer
+│   └── Services/                    # FileWatcher, NotchController, ApprovalService
+├── hooks/                           # Claude Code hook scripts + installer
+└── scripts/                         # Build & packaging scripts
 ```
 
 ### Hook Events
@@ -105,6 +121,7 @@ claude-notch/
 | `SessionStart` | Claude Code session begins | `started` |
 | `PreToolUse` | Before a tool executes | `tool_running` |
 | `PostToolUse` | After a tool completes | `thinking` |
+| `Notification` | Permission prompt received | `pending_approval` |
 | `Stop` | Claude finishes responding | `completed` |
 | `SessionEnd` | Session exits | File deleted |
 
@@ -120,9 +137,12 @@ claude-notch/
 |------|------|
 | **刘海屏状态显示** | 紧凑模式显示活跃/总会话数 + 脉冲状态指示灯 |
 | **可展开会话列表** | 鼠标悬停展开，查看所有会话的项目名、工具名和状态 |
+| **点击展开详情** | 点击任意会话行，查看完整命令文本 / 文件路径 |
+| **一键审批** | 直接在刘海屏批准权限请求，无需切换窗口 |
+| **跳转 iTerm** | 多选项审批场景下，一键打开对应的 iTerm tab |
+| **智能排序** | 会话按优先级排序：待审批 > 运行中 > 思考中 > 空闲 > 已结束 |
 | **5+ 会话支持** | 可折叠列表，支持 "显示更多"，适合多任务重度用户 |
 | **可爱吉祥物** | 活跃时上下弹跳、随机眨眼、根据状态变换表情的动画小脸 |
-| **自动检测** | 通过 Claude Code Hooks 主动推送状态变更，无轮询、无延迟 |
 | **零配置** | 一个安装脚本搞定一切 |
 
 ### 工作原理
@@ -139,28 +159,38 @@ ClaudeNotch App → 刘海屏 UI
 
 **会话状态流转：** 已启动 → 思考中 → 工具运行中 → 工具完成 → 空闲 → 已结束
 
+### 安装（DMG）
+
+1. 从 [Releases](https://github.com/RedHiwiK/hk-claude-notch/releases) 下载最新的 `ClaudeNotch.dmg`
+2. 打开 DMG，将 **ClaudeNotch.app** 拖入 `/Applications`
+3. 安装 hooks：
+```bash
+/Applications/ClaudeNotch.app/Contents/Resources/install-hooks.sh
+```
+4. 从启动台打开 ClaudeNotch
+5. 重启你的 Claude Code 会话以激活 hooks
+
+### 从源码构建
+
+需要 Swift 6.0+ 工具链。
+
+```bash
+git clone https://github.com/RedHiwiK/hk-claude-notch.git
+cd hk-claude-notch
+
+# 编译 & 安装 hooks
+swift build
+./hooks/install.sh
+
+# 运行
+swift run ClaudeNotch
+```
+
 ### 环境要求
 
 - macOS 14+（Sonoma 或更高）
-- Swift 6.0+ 工具链
 - 已安装 [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
 - 推荐安装 `jq`（`brew install jq`），未安装时回退到 Python 3
-
-### 快速开始
-
-```bash
-# 1. 编译
-cd claude-notch
-swift build
-
-# 2. 安装 hooks 到 Claude Code
-./hooks/install.sh
-
-# 3. 运行
-swift run ClaudeNotch
-
-# 4. 重启你的 Claude Code 会话以激活 hooks
-```
 
 ### 菜单栏操作
 
@@ -178,6 +208,7 @@ swift run ClaudeNotch
 | 🟣 紫色 | Claude 正在思考 |
 | 🟠 橙色 | 工具运行中 |
 | 🟢 绿色 | 工具执行完成 |
+| 🟡 黄色 | 待审批 |
 | ⚪ 灰色 | 空闲（等待输入） |
 | 🔴 红色 | 出错 |
 
@@ -188,5 +219,6 @@ swift run ClaudeNotch
 | `SessionStart` | Claude Code 会话启动 | `started` |
 | `PreToolUse` | 工具执行前 | `tool_running` |
 | `PostToolUse` | 工具执行后 | `thinking` |
+| `Notification` | 收到权限审批请求 | `pending_approval` |
 | `Stop` | Claude 完成响应 | `completed` |
 | `SessionEnd` | 会话退出 | 删除文件 |

@@ -10,41 +10,29 @@ CWD=$(json_get "$INPUT" "cwd")
 TOOL_SUMMARY=""
 case "$TOOL_NAME" in
   Bash)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.command" | head -c 60)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.command" | head -c 500)
     ;;
   Edit|Write)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.file_path" | xargs basename 2>/dev/null)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.file_path" | head -c 500)
     ;;
   Read)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.file_path" | xargs basename 2>/dev/null)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.file_path" | head -c 500)
     ;;
   Grep)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.pattern" | head -c 40)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.pattern" | head -c 200)
     ;;
   Glob)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.pattern" | head -c 40)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.pattern" | head -c 200)
     ;;
   Task)
-    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.description" | head -c 40)
+    TOOL_SUMMARY=$(json_get "$INPUT" "tool_input.description" | head -c 200)
     ;;
   *)
     TOOL_SUMMARY="$TOOL_NAME"
     ;;
 esac
 
-# 判断工具是否通常需要用户审批（default 权限模式下）
-# Bash、Edit、Write 等修改性工具通常需要审批
-NEEDS_APPROVAL=false
-case "$TOOL_NAME" in
-  Bash|Edit|Write|NotebookEdit)
-    NEEDS_APPROVAL=true
-    ;;
-esac
-
-# 检查是否设置了 CLAUDE_NOTCH_AUTO_APPROVE 标记（通过环境变量控制）
-if [ "$NEEDS_APPROVAL" = "true" ] && [ "${CLAUDE_NOTCH_NO_APPROVAL:-}" != "1" ]; then
-  write_status "$SESSION_ID" "pending_approval" "PreToolUse" "$TOOL_NAME" "$TOOL_SUMMARY" "$CWD" "Approval needed: $TOOL_NAME"
-else
-  write_status "$SESSION_ID" "tool_running" "PreToolUse" "$TOOL_NAME" "$TOOL_SUMMARY" "$CWD" "Running $TOOL_NAME"
-fi
+# 审批检测已交由 Notification hook (permission_prompt) 负责
+# PreToolUse 统一写入 tool_running 状态
+write_status "$SESSION_ID" "tool_running" "PreToolUse" "$TOOL_NAME" "$TOOL_SUMMARY" "$CWD" "Running $TOOL_NAME"
 exit 0
