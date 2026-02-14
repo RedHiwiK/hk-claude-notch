@@ -51,8 +51,12 @@ ClaudeNotch App → Notch UI
 
 1. Download the latest `ClaudeNotch.dmg` from [Releases](https://github.com/RedHiwiK/hk-claude-notch/releases)
 2. Open the DMG and drag **ClaudeNotch.app** to `/Applications`
-3. Open ClaudeNotch from Applications (hooks are installed automatically on first launch)
-4. Restart your Claude Code sessions to activate hooks
+3. Remove macOS quarantine (the app is not code-signed):
+```bash
+xattr -cr /Applications/ClaudeNotch.app
+```
+4. Open ClaudeNotch from Applications (hooks are installed automatically on first launch)
+5. Restart your Claude Code sessions to activate hooks
 
 ### Build from Source
 
@@ -159,8 +163,12 @@ ClaudeNotch App → 刘海屏 UI
 
 1. 从 [Releases](https://github.com/RedHiwiK/hk-claude-notch/releases) 下载最新的 `ClaudeNotch.dmg`
 2. 打开 DMG，将 **ClaudeNotch.app** 拖入 `/Applications`
-3. 从启动台打开 ClaudeNotch（首次启动自动安装 hooks）
-4. 重启你的 Claude Code 会话以激活 hooks
+3. 移除 macOS 隔离属性（应用未签名）：
+```bash
+xattr -cr /Applications/ClaudeNotch.app
+```
+4. 从启动台打开 ClaudeNotch（首次启动自动安装 hooks）
+5. 重启你的 Claude Code 会话以激活 hooks
 
 ### 从源码构建
 
