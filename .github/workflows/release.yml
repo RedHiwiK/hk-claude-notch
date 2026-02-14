@@ -28,6 +28,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: .build/ClaudeNotch.dmg
-          generate_release_notes: true
-          draft: false
+          generate_release_notes: false
+          draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
