@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="Resources/AppIcon.png" width="128" alt="ClaudeNotch Icon">
+
 # ClaudeNotch
 
 **Monitor your Claude Code sessions from the MacBook notch.**
